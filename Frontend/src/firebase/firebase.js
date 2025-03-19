@@ -1,27 +1,30 @@
-// Import the necessary functions from Firebase SDK
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth"; // Importing auth and GoogleAuthProvider
-import { getStorage } from "firebase/storage"; // Import storage
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "Changes",
-  authDomain: "edu-ai-50f9e.firebaseapp.com",
-  projectId: "edu-ai-50f9e",
-  storageBucket: "edu-ai-50f9e.appspot.com",
-  messagingSenderId: "287294567787",
-  appId: "1:287294567787:web:4f5b4d6569a3fd2d62c82e",
-  measurementId: "G-2W9MVJWBEB",
+  apiKey: "AIzaSyCI6WjKkaYaslkx6yME-YzX2hu_MG_YTu8",
+  authDomain: "planner-e821a.firebaseapp.com",
+  projectId: "planner-e821a",
+  storageBucket: "planner-e821a.firebasestorage.app",
+  messagingSenderId: "617836060013",
+  appId: "1:617836060013:web:ec85588e5eecd505c68e64",
+  measurementId: "G-5T31WYTMDC"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // Initialize Firebase Authentication and Google Auth Provider
 const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+const googleProvider = new googleProvider();
 
 // Initialize Firebase Storage
 const storage = getStorage(app);
 
-export { auth, googleProvider, storage };
+export { auth, googleProvider, storage ,analytics };
