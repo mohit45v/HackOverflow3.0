@@ -47,6 +47,7 @@ const CORS_OPTIONS = {
     const allowedOrigins = [
       "http://192.168.0.104:3030", // Your React app's IP and port
       "http://localhost:3030",
+      "http://localhost:3031"
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
