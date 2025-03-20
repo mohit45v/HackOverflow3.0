@@ -41,6 +41,8 @@ import CertificateVerify from './pages/Instructor/CertificateVerify';
 import PersonalizedCourses from './pages/PersonalizedCourses/PersonalizedCourses';
 import PersonalizedCourseLearning from './pages/PersonalizedCourses/PersonalizedCourseLearning';
 
+import WebSocketPage from './pages/Community/WebSocketPage';
+
 function App() {
   return (
     <Provider store={store}>
@@ -72,6 +74,7 @@ function App() {
                   <Route path="/signup" element={<SignUpLayout />} />
                   <Route path="/login" element={<LogInLayout />} />
                   <Route path="/internships" element={<Internships />} />
+                  <Route path="/websocket" element={<WebSocketPage />} />
 
                   {/* Instructor Routes with Layout */}
                   <Route

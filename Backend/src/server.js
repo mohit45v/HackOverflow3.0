@@ -3,12 +3,12 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import firebaseAdmin from "firebase-admin"; // Import Firebase Admin SDK
+import firebaseAdmin from "firebase-admin";
+import { WebSocketServer } from "ws"; // Import WebSocket Server
+import { createServer } from "http"; // Required for WebSockets
 
-//utilities imports
+// Utilities & Routes
 import connectDB from "./utils/connection.util.js";
-
-//routes imports
 import healthRoutes from "./routes/health.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import courseRoutes from "./routes/course.routes.js";
@@ -28,11 +28,11 @@ import { dirname, join } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Firebase Initialization
 let serviceAccount;
 try {
   const serviceAccountPath = join(__dirname, "../service-account.json");
   serviceAccount = JSON.parse(readFileSync(serviceAccountPath));
-
   firebaseAdmin.initializeApp({
     credential: firebaseAdmin.credential.cert(serviceAccount),
   });
@@ -41,27 +41,33 @@ try {
   console.warn("Firebase service account not found, authentication features will be limited");
 }
 
-//constants
-const CORS_OPTIONS = {
-  origin: process.env.ALLOWED_ORIGINS.split(','),
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
-
-//server config/initialization
+// Server Configuration
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 connectDB();
 const app = express();
+const server = createServer(app); // Create an HTTP server
 
-//middlewares
+// CORS Configuration
+const CORS_OPTIONS = {
+  origin: process.env.ALLOWED_ORIGINS.split(','),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowEIO3: true,
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+};
+
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors(CORS_OPTIONS));
 
-//routes
+// Routes
 app.use(healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/course", courseRoutes);
@@ -73,7 +79,86 @@ app.use("/api/achievements", achievementRoutes);
 app.use("/api/gamification", gamificationRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/roadmap", customRoutes);
-// app.use("/api/certificates/handle", certificateRoutes);
-app.listen(PORT, "0.0.0.0", () => {
+
+// WebSocket Server Setup
+const wss = new WebSocketServer({ 
+  server,
+  path: "/api/chat",
+  perMessageDeflate: false,
+  handleProtocols: () => "chat",
+  verifyClient: (info, callback) => {
+    // Accept all connections for now
+    callback(true);
+  }
+});
+
+// Keep track of connected clients
+const clients = new Set();
+
+wss.on("connection", (ws, req) => {
+  console.log("New WebSocket client connected");
+  clients.add(ws);
+
+  // Send welcome message
+  ws.send(JSON.stringify({
+    type: "system",
+    message: "Welcome to the chat!"
+  }));
+
+  // Handle incoming messages
+  ws.on("message", (message) => {
+    try {
+      const messageStr = message.toString();
+      console.log(`Received: ${messageStr}`);
+      
+      // Echo back to sender
+      ws.send(JSON.stringify({
+        type: "received",
+        message: messageStr
+      }));
+
+      // Broadcast to other clients
+      clients.forEach((client) => {
+        if (client !== ws && client.readyState === ws.OPEN) {
+          client.send(JSON.stringify({
+            type: "message",
+            message: messageStr
+          }));
+        }
+      });
+    } catch (error) {
+      console.error('Error handling message:', error);
+    }
+  });
+
+  ws.on("close", () => {
+    console.log("Client disconnected");
+    clients.delete(ws);
+  });
+
+  ws.on("error", (err) => {
+    console.error(`WebSocket error: ${err.message}`);
+    clients.delete(ws);
+  });
+});
+
+// Implement ping-pong interval
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      clients.delete(ws);
+      return ws.terminate();
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
+wss.on('close', () => {
+  clearInterval(interval);
+});
+
+// Start HTTP Server with WebSockets Support
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
