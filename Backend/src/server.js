@@ -27,13 +27,19 @@ import { dirname, join } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const serviceAccount = JSON.parse(
-  readFileSync(join(__dirname, "../service-account.json"))
-);
 
-firebaseAdmin.initializeApp({
-  credential: firebaseAdmin.credential.cert(serviceAccount), // Initialize using the service account key
-});
+let serviceAccount;
+try {
+  const serviceAccountPath = join(__dirname, "../service-account.json");
+  serviceAccount = JSON.parse(readFileSync(serviceAccountPath));
+
+  firebaseAdmin.initializeApp({
+    credential: firebaseAdmin.credential.cert(serviceAccount),
+  });
+  console.log("Firebase Admin initialized successfully");
+} catch (error) {
+  console.warn("Firebase service account not found, authentication features will be limited");
+}
 
 //constants
 const CORS_OPTIONS = {

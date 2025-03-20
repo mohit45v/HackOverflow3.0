@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaGoogle,  FaGithub } from 'react-icons/fa';
+import { FaGoogle, FaGithub } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { cn } from "@/lib/utils";
 import { useTheme } from "../../components/theme-provider";
@@ -46,7 +46,7 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('Form submitted with data:', formData);
-    
+
     const newErrors = validateForm();
     setErrors(newErrors);
 
@@ -68,8 +68,39 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("http://localhost:5000/api/auth/logout", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      // Clear auth token first
+      localStorage.removeItem("auth_token");
+
+      // Reset Redux store 
+      resetStore();
+
+      // Navigate to home page
+      navigate("/");
+
+      if (!response.ok) {
+        console.error("Logout failed:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error during sign-out:", error);
+      // Even if there's an error, ensure the local state is cleared
+      localStorage.removeItem("auth_token");
+    }
+  }
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
@@ -79,7 +110,7 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
         "bg-card rounded-2xl p-8 sm:p-12 w-full shadow-lg border",
         theme === 'dark' ? 'bg-[#110C1D] border-[#6938EF]/20' : 'bg-white border-border'
       )}>
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -90,7 +121,7 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
         >
           Create Account
         </motion.h1>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
@@ -98,9 +129,9 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
         >
           Join our learning community today
         </motion.p>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -234,8 +265,8 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
               </div>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className={cn(
                 "relative w-full py-3 px-4 rounded-xl font-semibold text-white",
                 "bg-[#6938EF] hover:bg-[#5B2FD1] active:bg-[#4B24B3]",
@@ -263,7 +294,7 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
             </span>
           </div>
           <div className="flex justify-center gap-4">
-            <button 
+            <button
               type="button"
               className={cn(
                 "relative flex items-center gap-2 px-6 py-3 rounded-xl border",
@@ -278,7 +309,7 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
               <FaGoogle className="text-xl text-[#ea4335]" />
               <span className="text-sm font-medium">Google</span>
             </button>
-            <button 
+            <button
               type="button"
               className={cn(
                 "relative flex items-center gap-2 px-6 py-3 rounded-xl border",
