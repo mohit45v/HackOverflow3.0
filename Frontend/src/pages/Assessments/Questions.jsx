@@ -52,24 +52,46 @@ const Questions = () => {
                     ? questions[index].options[selectedOptions[index]]?.label || ''
                     : selectedOptions[index] || ''
             }));
-
+    
             let inputValue = `${initialResponses[0].answer} ${initialResponses[1].answer}`;
             console.log("Sending input to API:", inputValue);
             
             const res = await getQuestions(inputValue);
             
+            // Log the raw response
+            console.log("Raw API response:", res);
+            
             // Extract the message text from the nested response structure
             const messageText = res.outputs?.[0]?.outputs?.[0]?.results?.message?.text || '';
-            const cleanText = messageText.replace(/```json\n|\n```/g, '').trim();
-            console.log("Cleaned text:", cleanText);
+            console.log("Message text before cleaning:", messageText);
+            
+            // More careful JSON cleaning
+            let cleanText = messageText
+                .replace(/```json\s*/g, '') // Remove ```json with any whitespace
+                .replace(/```\s*$/g, '')    // Remove closing ``` with any whitespace
+                .trim();                    // Remove any extra whitespace
+                
+            console.log("Cleaned text before parsing:", cleanText);
             
             let response;
             try {
+                // Try to fix common JSON issues before parsing
+                cleanText = cleanText
+                    .replace(/,\s*}/g, '}')     // Remove trailing commas
+                    .replace(/,\s*]/g, ']')     // Remove trailing commas in arrays
+                    .replace(/\n/g, ' ')        // Remove newlines
+                    .replace(/\r/g, ' ')        // Remove carriage returns
+                    .replace(/\t/g, ' ')        // Remove tabs
+                    .replace(/\s+/g, ' ')       // Normalize spaces
+                    .trim();                    // Final trim
+                
+                console.log("Final text to parse:", cleanText);
                 response = JSON.parse(cleanText);
-                console.log("Parsed response:", response);
+                console.log("Successfully parsed response:", response);
             } catch (e) {
-                console.error("Error parsing JSON:", e);
-                throw new Error("Failed to parse assessment data");
+                console.error("JSON Parse Error:", e);
+                console.error("Failed text:", cleanText);
+                throw new Error(`Failed to parse assessment data: ${e.message}`);
             }
 
             if (response.questions && response.questions.length > 0) {
@@ -195,7 +217,7 @@ const Questions = () => {
             setMessage("Creating Your Learning Roadmap");
             
             const langflowResponse = await axios.post(
-                'http://localhost:5000/api/assessment/langflow',
+                'http://localhost:4000/api/assessment/langflow',
                 {
                     input_value: `Level: ${initialResponses[0].answer}, Interest: ${initialResponses[1].answer}, Score: ${averageScore}`,
                     assessmentScore: averageScore,
