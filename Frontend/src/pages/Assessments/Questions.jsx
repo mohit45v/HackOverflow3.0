@@ -14,7 +14,7 @@ const Questions = () => {
     const [showReview, setShowReview] = useState(false);
     const [showAssessment, setShowAssessment] = useState(false);
     const [showInstructions, setShowInstructions] = useState(false);
-    
+
     // Modified initial questions
     const initialQuestions = [
         {
@@ -41,38 +41,38 @@ const Questions = () => {
     const [questions, setQuestions] = useState(initialQuestions);
     const [isInitialQuestionsCompleted, setIsInitialQuestionsCompleted] = useState(false);
 
-    
-    
+
+
     const fetchAssessment = async () => {
         try {
             setIsLoading(true);
             const initialResponses = questions.slice(0, 2).map((question, index) => ({
                 question: question.question,
-                answer: question.type === "multiple-choice" 
+                answer: question.type === "multiple-choice"
                     ? questions[index].options[selectedOptions[index]]?.label || ''
                     : selectedOptions[index] || ''
             }));
-    
+
             let inputValue = `${initialResponses[0].answer} ${initialResponses[1].answer}`;
             console.log("Sending input to API:", inputValue);
-            
+
             const res = await getQuestions(inputValue);
-            
+
             // Log the raw response
             console.log("Raw API response:", res);
-            
+
             // Extract the message text from the nested response structure
             const messageText = res.outputs?.[0]?.outputs?.[0]?.results?.message?.text || '';
             console.log("Message text before cleaning:", messageText);
-            
+
             // More careful JSON cleaning
             let cleanText = messageText
                 .replace(/```json\s*/g, '') // Remove ```json with any whitespace
                 .replace(/```\s*$/g, '')    // Remove closing ``` with any whitespace
                 .trim();                    // Remove any extra whitespace
-                
+
             console.log("Cleaned text before parsing:", cleanText);
-            
+
             let response;
             try {
                 // Try to fix common JSON issues before parsing
@@ -84,7 +84,7 @@ const Questions = () => {
                     .replace(/\t/g, ' ')        // Remove tabs
                     .replace(/\s+/g, ' ')       // Normalize spaces
                     .trim();                    // Final trim
-                
+
                 console.log("Final text to parse:", cleanText);
                 response = JSON.parse(cleanText);
                 console.log("Successfully parsed response:", response);
@@ -112,13 +112,13 @@ const Questions = () => {
                     duration: response.duration || 15,
                     questions: assessmentQuestions
                 });
-                
+
                 // Initialize the selectedOptions array with the correct length
                 const totalQuestions = initialQuestions.length + assessmentQuestions.length;
                 const initialSelections = new Array(totalQuestions).fill(undefined);
                 initialSelections[0] = selectedOptions[0];
                 initialSelections[1] = selectedOptions[1];
-                
+
                 // Set the states in the correct order
                 setSelectedOptions(initialSelections);
                 setQuestions([...initialQuestions, ...assessmentQuestions]);
@@ -134,7 +134,7 @@ const Questions = () => {
             setIsLoading(false);
         }
     };
-    
+
 
     const handleNext = async () => {
         if (currentQuestion === 1 && !isInitialQuestionsCompleted) {
@@ -142,7 +142,7 @@ const Questions = () => {
             await fetchAssessment();
             return;
         }
-        
+
         if (currentQuestion < questions.length - 1) {
             setCurrentQuestion(currentQuestion + 1);
         } else {
@@ -189,7 +189,7 @@ const Questions = () => {
             // Separate initial questions and assessment questions
             const initialResponses = questions.slice(0, 2).map((question, index) => ({
                 question: question.question,
-                answer: question.type === "multiple-choice" 
+                answer: question.type === "multiple-choice"
                     ? questions[index].options[selectedOptions[index]]?.label || ''
                     : selectedOptions[index] || ''
             }));
@@ -198,7 +198,7 @@ const Questions = () => {
             const assessmentResponses = questions.slice(2).map((question, index) => {
                 const actualIndex = index + 2; // Adjust index for the actual position in selectedOptions
                 const selectedOption = question.options[selectedOptions[actualIndex]];
-                
+
                 return {
                     questionId: question.id,
                     question: question.question,
@@ -215,9 +215,9 @@ const Questions = () => {
             await updateXP(20);
 
             setMessage("Creating Your Learning Roadmap");
-            
+
             const langflowResponse = await axios.post(
-                'http://localhost:4000/api/assessment/langflow',
+                `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_LANGFLOW_ENDPOINT}`,
                 {
                     input_value: `Level: ${initialResponses[0].answer}, Interest: ${initialResponses[1].answer}, Score: ${averageScore}`,
                     assessmentScore: averageScore,
@@ -231,7 +231,7 @@ const Questions = () => {
                     }
                 }
             );
-            
+
             const resultsData = {
                 averageScore,
                 totalQuestions,
@@ -241,11 +241,11 @@ const Questions = () => {
                     results: langflowResponse.data.roadmap || langflowResponse.data
                 }
             };
-      
+
             localStorage.setItem('assessmentResults', JSON.stringify(resultsData));
             await new Promise(resolve => setTimeout(resolve, 1000));
             navigate('/roadmap');
-            
+
         } catch (error) {
             console.error('Error submitting assessment:', error);
             setError(error.response?.data?.message || 'Failed to submit assessment. Please try again.');
@@ -390,7 +390,7 @@ const Questions = () => {
                                 {selectedOptions[index] !== undefined && (
                                     <div className="text-sm text-muted-foreground">
                                         Your answer: {
-                                            question.type === "multiple-choice" 
+                                            question.type === "multiple-choice"
                                                 ? question.options[selectedOptions[index]]?.label
                                                 : selectedOptions[index]
                                         }
@@ -444,7 +444,7 @@ const Questions = () => {
                 {!showAssessment && currentQuestion <= 1 ? (
                     <>
                         <div className="w-full h-1 bg-muted rounded-t-xl overflow-hidden">
-                            <div 
+                            <div
                                 className="h-full bg-[#6938EF] dark:bg-[#9D7BFF] transition-all duration-300"
                                 style={{ width: `${((currentQuestion + 1) / 2) * 100}%` }}
                             />
@@ -550,7 +550,7 @@ const Questions = () => {
 
                         {/* Progress bar */}
                         <div className="w-full h-1 bg-muted rounded-t-xl overflow-hidden">
-                            <div 
+                            <div
                                 className="h-full bg-[#6938EF] dark:bg-[#9D7BFF] transition-all duration-300"
                                 style={{ width: `${((currentQuestion - 1) / (questions.length - 2)) * 100}%` }}
                             />
@@ -606,11 +606,11 @@ const Questions = () => {
                                             onClick={() => handleDotClick(index + 2)}
                                             className={cn(
                                                 "w-2 h-2 rounded-full cursor-pointer transition-colors",
-                                                index + 2 === currentQuestion 
-                                                    ? "bg-[#6938EF] dark:bg-[#9D7BFF]" 
+                                                index + 2 === currentQuestion
+                                                    ? "bg-[#6938EF] dark:bg-[#9D7BFF]"
                                                     : selectedOptions[index + 2] !== undefined
-                                                    ? "bg-[#6938EF]/50 dark:bg-[#9D7BFF]/50"
-                                                    : "bg-muted hover:bg-muted-foreground"
+                                                        ? "bg-[#6938EF]/50 dark:bg-[#9D7BFF]/50"
+                                                        : "bg-muted hover:bg-muted-foreground"
                                             )}
                                         />
                                     ))}

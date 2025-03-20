@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:4000/", // Update port from 3000 to 4000
+  baseURL: import.meta.env.VITE_API_URL, // Update port from 3000 to 4000
   withCredentials: true,
 });
 
@@ -273,7 +273,7 @@ export const getCourseProgress = async (courseId) => {
 
 export const nextQuestions = async (responses) => {
   return axios.post(
-    "http://localhost:4000/api/assessment/next-questions", // Update port from 5000 to 4000 // Update port from 5000 to 4000
+    "/api/assessment/next-questions", // Update port from 5000 to 4000 // Update port from 5000 to 4000
     {
       responses,
     },

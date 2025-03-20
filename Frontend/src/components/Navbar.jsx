@@ -29,22 +29,25 @@ export function Navbar() {
   const { role } = useSelector((state) => state.user);
   const user = authState.userData;
   const location = useLocation();
-  
+
   const handleSignOut = async () => {
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("http://localhost:5000/api/auth/logout", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_AUTH_LOGOUT_ENDPOINT}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          credentials: 'include'
+        }
+      );
 
       // Clear auth token first
       localStorage.removeItem("auth_token");
-      
+
       // Reset Redux store
       resetStore();
 
@@ -71,7 +74,7 @@ export function Navbar() {
         { path: "/internships", label: "Internships" },
       ];
     }
-    
+
     if (role === 'instructor') {
       return [
         { path: "/instructor/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -79,7 +82,7 @@ export function Navbar() {
         { path: "/instructor/assessments", label: "Assessments", icon: FileQuestion }
       ];
     }
-    
+
     return [
       { path: "/", label: "Home" },
       { path: "/community", label: "Community" },
@@ -127,7 +130,7 @@ export function Navbar() {
           </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          
+
           <DropdownMenuItem
             className="text-red-600 dark:text-red-400 justify-center hover:bg-red-50 dark:hover:bg-red-900/20"
             onClick={handleSignOut}
@@ -214,15 +217,15 @@ export function Navbar() {
       <div className="container mx-auto px-4 sm:px-8 flex h-16 items-center justify-between">
         <div className="flex items-center space-x-3">
           <GraduationCap className="h-6 w-6 text-[#6938EF] dark:text-[#9D7BFF]" />
-          <Link 
-            to={role === 'instructor' ? "/instructor/dashboard" : "/"} 
+          <Link
+            to={role === 'instructor' ? "/instructor/dashboard" : "/"}
             className="text-xl font-bold text-[#6938EF] dark:text-[#9D7BFF]"
           >
             EduAI
           </Link>
         </div>
 
-        { (
+        {(
           <div className="hidden md:flex items-center justify-center space-x-6 absolute left-1/2 transform -translate-x-1/2">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;

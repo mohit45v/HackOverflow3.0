@@ -71,14 +71,17 @@ const RightSection = ({ defaultData = {}, onGoggleSignUp, onSignUp, onGithubSign
   const handleSignOut = async () => {
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("http://localhost:5000/api/auth/logout", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_AUTH_LOGOUT_ENDPOINT}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          credentials: 'include'
+        }
+      );
 
       // Clear auth token first
       localStorage.removeItem("auth_token");

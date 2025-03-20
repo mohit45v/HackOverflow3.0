@@ -43,13 +43,7 @@ try {
 
 //constants
 const CORS_OPTIONS = {
-  origin: [
-    "http://192.168.0.104:3030",
-    "http://localhost:3030",
-    "http://localhost:3031",
-    "http://localhost:5173",  // Add your frontend dev server port if using Vite
-    "http://localhost:3000"  // Add your frontend URLs
-  ],
+  origin: process.env.ALLOWED_ORIGINS.split(','),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
