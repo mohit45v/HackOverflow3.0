@@ -82,16 +82,18 @@ app.use("/api/roadmap", customRoutes);
 
 // WebSocket Server Setup
 const wss = new WebSocketServer({ 
-  server,
+  noServer: true,
   path: "/api/chat"
 });
 
-// Keep track of connected clients
-const clients = new Set();
+server.on('upgrade', (request, socket, head) => {
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
+});
 
 wss.on("connection", (ws, req) => {
   console.log("New WebSocket client connected");
-  clients.add(ws);
 
   // Send welcome message
   ws.send(JSON.stringify({
@@ -105,15 +107,13 @@ wss.on("connection", (ws, req) => {
       const messageStr = message.toString();
       console.log(`Received: ${messageStr}`);
       
-      // Broadcast to ALL clients including sender
+      // Broadcast to ALL clients
       wss.clients.forEach((client) => {
-        if (client.readyState === ws.OPEN) {
-          client.send(JSON.stringify({
-            type: "message",
-            message: messageStr,
-            timestamp: new Date().toISOString()
-          }));
-        }
+        client.send(JSON.stringify({
+          type: "message",
+          message: messageStr,
+          timestamp: new Date().toISOString()
+        }));
       });
     } catch (error) {
       console.error('Error handling message:', error);
@@ -122,12 +122,10 @@ wss.on("connection", (ws, req) => {
 
   ws.on("close", () => {
     console.log("Client disconnected");
-    clients.delete(ws);
   });
 
   ws.on("error", (err) => {
     console.error(`WebSocket error: ${err.message}`);
-    clients.delete(ws);
   });
 });
 
