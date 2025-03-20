@@ -4,8 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import firebaseAdmin from "firebase-admin";
-import { WebSocketServer } from "ws"; // Import WebSocket Server
-import { createServer } from "http"; // Required for WebSockets
+import { createServer } from "http";
+import { Server as SocketServer } from 'socket.io';
 
 // Utilities & Routes
 import connectDB from "./utils/connection.util.js";
@@ -20,7 +20,6 @@ import achievementRoutes from "./routes/achievement.routes.js";
 import gamificationRoutes from "./routes/gamification.routes.js";
 import recommendationRoutes from "./routes/recommendation.routes.js";
 import customRoutes from "./routes/custom.routes.js";
-
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -46,7 +45,7 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 connectDB();
 const app = express();
-const server = createServer(app); // Create an HTTP server
+const server = createServer(app);
 
 // CORS Configuration
 const CORS_OPTIONS = {
@@ -80,72 +79,50 @@ app.use("/api/gamification", gamificationRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/roadmap", customRoutes);
 
-// WebSocket Server Setup
-const wss = new WebSocketServer({ 
-  noServer: true,
-  path: "/api/chat"
+// Socket.IO Setup
+const io = new SocketServer(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
 });
 
-server.on('upgrade', (request, socket, head) => {
-  wss.handleUpgrade(request, socket, head, (ws) => {
-    wss.emit('connection', ws, request);
-  });
-});
-
-wss.on("connection", (ws, req) => {
-  console.log("New WebSocket client connected");
+io.on('connection', (socket) => {
+  console.log('New client connected:', socket.id);
 
   // Send welcome message
-  ws.send(JSON.stringify({
-    type: "system",
-    message: "Welcome to the chat!"
-  }));
-
-  // Handle incoming messages
-  ws.on("message", (message) => {
-    try {
-      const messageStr = message.toString();
-      console.log(`Received: ${messageStr}`);
-      
-      // Broadcast to ALL clients
-      wss.clients.forEach((client) => {
-        client.send(JSON.stringify({
-          type: "message",
-          message: messageStr,
-          timestamp: new Date().toISOString()
-        }));
-      });
-    } catch (error) {
-      console.error('Error handling message:', error);
-    }
+  socket.emit('message', {
+    type: 'system',
+    text: 'Welcome to the chat!',
+    timestamp: new Date()
   });
 
-  ws.on("close", () => {
-    console.log("Client disconnected");
+  // Broadcast user count
+  io.emit('message', {
+    type: 'system',
+    text: `${io.engine.clientsCount} users online`,
+    timestamp: new Date()
   });
 
-  ws.on("error", (err) => {
-    console.error(`WebSocket error: ${err.message}`);
+  socket.on('message', (message) => {
+    io.emit('message', {
+      text: message,
+      userId: socket.id,
+      timestamp: new Date()
+    });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+    io.emit('message', {
+      type: 'system',
+      text: `${io.engine.clientsCount} users online`,
+      timestamp: new Date()
+    });
   });
 });
 
-// Implement ping-pong interval
-const interval = setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (ws.isAlive === false) {
-      clients.delete(ws);
-      return ws.terminate();
-    }
-    ws.isAlive = false;
-    ws.ping();
-  });
-}, 30000);
-
-wss.on('close', () => {
-  clearInterval(interval);
-});
-
-// Start HTTP Server with WebSockets Support
+// Start Server
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });

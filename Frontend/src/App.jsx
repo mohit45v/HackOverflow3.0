@@ -42,6 +42,7 @@ import PersonalizedCourses from './pages/PersonalizedCourses/PersonalizedCourses
 import PersonalizedCourseLearning from './pages/PersonalizedCourses/PersonalizedCourseLearning';
 
 import WebSocketPage from './pages/Community/WebSocketPage';
+import Chat from './pages/Community/Chat';
 
 function App() {
   return (
@@ -75,6 +76,7 @@ function App() {
                   <Route path="/login" element={<LogInLayout />} />
                   <Route path="/internships" element={<Internships />} />
                   <Route path="/websocket" element={<WebSocketPage />} />
+                  <Route path="/chat" element={<Chat />} />
 
                   {/* Instructor Routes with Layout */}
                   <Route
