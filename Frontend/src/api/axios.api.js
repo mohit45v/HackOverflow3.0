@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000/",
+  baseURL: "http://localhost:4000/", // Update port from 3000 to 4000
   withCredentials: true,
 });
 
@@ -81,16 +81,21 @@ export const emailSignup = (name, email, password, interests) => {
 };
 
 // Google signup API
-export const googleSignup = (auth_token) => {
-  return api.post(
-    "/api/auth/google/register",
-    { auth_token },
-    {
+export const googleSignup = async (token) => {
+  try {
+    const response = await api.post("/api/auth/google/register", {
+      auth_token: token // Make sure to send token as auth_token
+    }, {
       headers: {
         "Content-Type": "application/json",
-      },
-    }
-  );
+        "Authorization": `Bearer ${token}` // Add token to headers
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error("Google signup error:", error);
+    throw error;
+  }
 };
 
 // Create Course API
@@ -268,7 +273,7 @@ export const getCourseProgress = async (courseId) => {
 
 export const nextQuestions = async (responses) => {
   return axios.post(
-    "http://localhost:5000/api/assessment/next-questions",
+    "http://localhost:4000/api/assessment/next-questions", // Update port from 5000 to 4000 // Update port from 5000 to 4000
     {
       responses,
     },

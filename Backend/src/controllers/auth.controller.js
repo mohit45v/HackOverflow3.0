@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 // utils
 import { createToken, verifyToken } from "../utils/jwt.util.js";
 import { hashPassword, comparePassword } from "../utils/password.util.js";
+import { getAuth } from 'firebase-admin/auth';
 
 export const register = async (req, res) => {
   try {
@@ -237,17 +238,31 @@ export const googleLogin = async (req, res) => {
 export const googleRegister = async (req, res) => {
   try {
     const { auth_token } = req.body;
-    // Verify the Firebase ID token
-    const decodedToken = await firebaseAdmin.auth().verifyIdToken(auth_token);
-    const uid = decodedToken.uid; // Firebase user UID
+
+    if (!auth_token) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No auth token provided' 
+      });
+    }
+
+    // Verify the Firebase token
+    const decodedToken = await getAuth().verifyIdToken(auth_token);
+    
+    if (!decodedToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid authentication token'
+      });
+    }
 
     // Check if the user already exists in the database
-    let user = await User.findOne({ uid: uid });
+    let user = await User.findOne({ uid: decodedToken.uid });
 
     if (!user) {
       // User doesn't exist, so create a new user
       user = new User({
-        uid: uid,
+        uid: decodedToken.uid,
         email: decodedToken.email, // You can store more details like email, name, etc.
         name: decodedToken.name,
         profilePicture: decodedToken.picture, // Optional: If you want to store user's photo URL
@@ -256,7 +271,7 @@ export const googleRegister = async (req, res) => {
       // Save the user to the database
       await user.save();
       const gamification = new Gamification({
-        userId: newUser._id,
+        userId: user._id,
         totalXP: 0,
         level: 1,
         rank: "Novice",
@@ -284,8 +299,12 @@ export const googleRegister = async (req, res) => {
         success: true,
       });
   } catch (error) {
-    console.error("Error verifying Firebase ID token:", error);
-    res.status(401).json({ message: "Unauthorized", error: error.message });
+    console.error('Google registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed',
+      error: error.message
+    });
   }
 };
 

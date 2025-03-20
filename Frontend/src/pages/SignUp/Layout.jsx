@@ -1,7 +1,7 @@
 import React from 'react';
 import LeftSection from './LeftSection';
 import RightSection from './RightSection';
-import { getAuth, signInWithPopup, GithubAuthProvider, linkWithCredential, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { getAuth, signInWithPopup, GithubAuthProvider, linkWithCredential, EmailAuthProvider, reauthenticateWithCredential, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { googleProvider } from '../../firebase/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -18,24 +18,59 @@ const Layout = () => {
   const onGoggleSignUp = async () => {
     try {
       const auth = getAuth();
-      const result = await signInWithPopup(auth, googleProvider);
+      
+      // Add popup settings
+      const settings = {
+        popup: true,
+        prompt: 'select_account'
+      };
+
+      // Try sign in with enhanced error handling
+      let result;
+      try {
+        result = await signInWithPopup(auth, googleProvider);
+      } catch (popupError) {
+        console.log("Popup failed, trying redirect...");
+        // Fallback to redirect method if popup fails
+        await signInWithRedirect(auth, googleProvider);
+        result = await getRedirectResult(auth);
+      }
+
+      if (!result?.user) {
+        throw new Error('No user data returned');
+      }
+
       const user = result.user;
       const auth_token = await user.getIdToken();
 
-      const response = await googleSignup(auth_token);
+      // Verify backend is running before making request
+      try {
+        const response = await googleSignup(auth_token);
 
-      if (response.success == true) {
-
-        dispatch(login({
-          name: user.displayName,
-          email: user.email,
-          avatar: user.photoURL,
-          role: response.user.role,
-        }));
-        navigate('/dashboard');
+        if (response.success === true) {
+          dispatch(login({
+            name: user.displayName,
+            email: user.email,
+            avatar: user.photoURL,
+            role: response.user.role,
+          }));
+          navigate('/dashboard');
+        }
+      } catch (backendError) {
+        console.error("Backend error:", backendError);
+        // Show user-friendly error
+        alert("Unable to connect to server. Please ensure the backend service is running.");
       }
+
     } catch (error) {
-      console.error("Error during register", error);
+      console.error("Error during register:", error);
+      if (error.code === 'auth/popup-blocked') {
+        alert('Please allow popups for this website to sign in with Google');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        alert('Sign-in was cancelled. Please try again.');
+      } else {
+        alert('An error occurred during sign in. Please try again.');
+      }
     }
   };
 

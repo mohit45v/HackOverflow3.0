@@ -43,20 +43,16 @@ try {
 
 //constants
 const CORS_OPTIONS = {
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      "http://192.168.0.104:3030", // Your React app's IP and port
-      "http://localhost:3030",
-      "http://localhost:3031"
-    ];
-
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true); // Accept the request
-    } else {
-      callback(new Error("Not allowed by CORS")); // Reject the request
-    }
-  },
-  credentials: true, // Allow cookies or other credentials to be sent
+  origin: [
+    "http://192.168.0.104:3030",
+    "http://localhost:3030",
+    "http://localhost:3031",
+    "http://localhost:5173",  // Add your frontend dev server port if using Vite
+    "http://localhost:3000"  // Add your frontend URLs
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 //server config/initialization
