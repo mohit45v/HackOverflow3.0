@@ -83,13 +83,7 @@ app.use("/api/roadmap", customRoutes);
 // WebSocket Server Setup
 const wss = new WebSocketServer({ 
   server,
-  path: "/api/chat",
-  perMessageDeflate: false,
-  handleProtocols: () => "chat",
-  verifyClient: (info, callback) => {
-    // Accept all connections for now
-    callback(true);
-  }
+  path: "/api/chat"
 });
 
 // Keep track of connected clients
@@ -111,18 +105,13 @@ wss.on("connection", (ws, req) => {
       const messageStr = message.toString();
       console.log(`Received: ${messageStr}`);
       
-      // Echo back to sender
-      ws.send(JSON.stringify({
-        type: "received",
-        message: messageStr
-      }));
-
-      // Broadcast to other clients
-      clients.forEach((client) => {
-        if (client !== ws && client.readyState === ws.OPEN) {
+      // Broadcast to ALL clients including sender
+      wss.clients.forEach((client) => {
+        if (client.readyState === ws.OPEN) {
           client.send(JSON.stringify({
             type: "message",
-            message: messageStr
+            message: messageStr,
+            timestamp: new Date().toISOString()
           }));
         }
       });
