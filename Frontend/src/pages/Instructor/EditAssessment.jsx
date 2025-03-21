@@ -36,7 +36,26 @@ const EditAssessment = () => {
   const fetchAssessment = async () => {
     try {
       const data = await getAssessmentDetails(assessmentId);
-      setAssessment(data.assessment);
+
+      // Clean up the received data
+      const cleanedAssessment = {
+        title: data.assessment.title,
+        field: data.assessment.field,
+        skillsAssessed: data.assessment.skillsAssessed || [],
+        difficulty: data.assessment.difficulty,
+        duration: data.assessment.duration,
+        questions: data.assessment.questions.map(q => ({
+          question: q.question,
+          skillCategory: q.skillCategory,
+          difficultyLevel: q.difficultyLevel,
+          options: q.options.map(opt => ({
+            text: opt.text,
+            isCorrect: opt.isCorrect
+          }))
+        }))
+      };
+
+      setAssessment(cleanedAssessment);
     } catch (error) {
       console.error('Error fetching assessment:', error);
       toast({
@@ -93,7 +112,7 @@ const EditAssessment = () => {
   const handleQuestionChange = (index, field, value) => {
     setAssessment(prev => ({
       ...prev,
-      questions: prev.questions.map((q, i) => 
+      questions: prev.questions.map((q, i) =>
         i === index ? { ...q, [field]: value } : q
       )
     }));
@@ -102,7 +121,7 @@ const EditAssessment = () => {
   const handleOptionChange = (questionIndex, optionIndex, field, value) => {
     setAssessment(prev => ({
       ...prev,
-      questions: prev.questions.map((q, qIndex) => 
+      questions: prev.questions.map((q, qIndex) =>
         qIndex === questionIndex ? {
           ...q,
           options: q.options.map((opt, oIndex) =>
@@ -142,17 +161,32 @@ const EditAssessment = () => {
     setSaving(true);
 
     try {
-      await updateAssessment(assessmentId, assessment);
+      // Clean up the assessment data
+      const cleanedAssessment = {
+        ...assessment,
+        questions: assessment.questions.map(q => ({
+          question: q.question,
+          skillCategory: q.skillCategory,
+          difficultyLevel: q.difficultyLevel,
+          options: q.options.map(opt => ({
+            text: opt.text,
+            isCorrect: opt.isCorrect
+          }))
+        }))
+      };
+
+      const response = await updateAssessment(assessmentId, cleanedAssessment);
+
       toast({
         title: "Success",
         description: "Assessment updated successfully",
       });
-      navigate(`/instructor/assessments/${assessmentId}`);
+      navigate('/instructor/assessments');
     } catch (error) {
       console.error('Error updating assessment:', error);
       toast({
         title: "Error",
-        description: "Failed to update assessment",
+        description: error.message || "Failed to update assessment",
         variant: "destructive",
       });
     } finally {

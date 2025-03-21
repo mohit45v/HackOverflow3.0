@@ -178,9 +178,34 @@ export const getAssessmentDetails = (assessmentId) => {
 };
 
 export const updateAssessment = (assessmentId, assessmentData) => {
-  return api.put(`/api/assessment/update/${assessmentId}`, assessmentData, {
-    withCredentials: true,
-  });
+  // Clean up the data to match backend expectations
+  const cleanedData = {
+    title: assessmentData.title,
+    field: assessmentData.field,
+    skillsAssessed: assessmentData.skillsAssessed,
+    difficulty: assessmentData.difficulty,
+    duration: assessmentData.duration,
+    questions: assessmentData.questions.map(q => ({
+      question: q.question,
+      skillCategory: q.skillCategory,
+      difficultyLevel: q.difficultyLevel,
+      options: q.options.map(opt => ({
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    }))
+  };
+
+  return api.put(
+    `/api/assessment/update/${assessmentId}`,
+    cleanedData,
+    {
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
 };
 
 export const deleteAssessment = (assessmentId) => {
@@ -421,5 +446,71 @@ export const getAllCustomCourses = async () => {
     });
   } catch (error) {
     throw error.response?.data || error.message;
+  }
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSaving(true);
+
+  try {
+    // Clean up the data before sending to API
+    const cleanedAssessment = {
+      ...assessment,
+      questions: assessment.questions.map(question => ({
+        question: question.question,
+        skillCategory: question.skillCategory,
+        difficultyLevel: question.difficultyLevel,
+        options: question.options.map(option => ({
+          text: option.text,
+          isCorrect: option.isCorrect
+        }))
+      }))
+    };
+
+    await updateAssessment(assessmentId, cleanedAssessment);
+    toast({
+      title: "Success",
+      description: "Assessment updated successfully",
+    });
+    navigate(`/instructor/assessments/${assessmentId}`);
+  } catch (error) {
+    console.error('Error updating assessment:', error);
+    toast({
+      title: "Error",
+      description: error.message || "Failed to update assessment",
+      variant: "destructive",
+    });
+  } finally {
+    setSaving(false);
+  }
+};
+
+const fetchAssessment = async () => {
+  try {
+    const data = await getAssessmentDetails(assessmentId);
+    // Clean up the received data
+    const cleanedAssessment = {
+      ...data.assessment,
+      questions: data.assessment.questions.map(question => ({
+        question: question.question,
+        skillCategory: question.skillCategory,
+        difficultyLevel: question.difficultyLevel,
+        options: question.options.map(option => ({
+          text: option.text,
+          isCorrect: option.isCorrect
+        }))
+      }))
+    };
+    setAssessment(cleanedAssessment);
+  } catch (error) {
+    console.error('Error fetching assessment:', error);
+    toast({
+      title: "Error",
+      description: "Failed to load assessment",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
   }
 };
