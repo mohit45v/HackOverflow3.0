@@ -208,30 +208,76 @@ export const profile = async (req, res) => {
 export const googleLogin = async (req, res) => {
   try {
     const { auth_token } = req.body;
-    // Verify the Firebase ID token
-    const decodedToken = await firebaseAdmin.auth().verifyIdToken(auth_token);
-    const uid = decodedToken.uid; // Firebase user UID
 
-    // Get user details from Firebase (optional)
-    const user = await User.findOne({ uid: uid }).select("-password");
+    if (!auth_token) {
+      return res.status(400).json({
+        success: false,
+        message: 'No auth token provided'
+      });
+    }
+
+    // Verify the Firebase token
+    const decodedToken = await getAuth().verifyIdToken(auth_token);
+
+    if (!decodedToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid authentication token'
+      });
+    }
+
+    // Find user by email OR uid
+    let user = await User.findOne({
+      $or: [
+        { email: decodedToken.email },
+        { uid: decodedToken.uid }
+      ]
+    });
+
+    // If user doesn't exist, redirect to registration
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found. Please register first.',
+        shouldRegister: true
+      });
+    }
+
+    // Update the user's Firebase UID if it's missing
+    if (!user.uid) {
+      user.uid = decodedToken.uid;
+      await user.save();
+    }
+
+    // Create token
     const token = createToken(user._id);
 
-    // Respond with user data or JWT, etc.
-    return res
-      .status(200)
+    // Update last login
+    await Gamification.findOneAndUpdate(
+      { userId: user._id },
+      { lastLogin: new Date() },
+      { upsert: true } // Create if doesn't exist
+    );
+
+    return res.status(200)
       .cookie("token", token, {
-        maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
-        httpOnly: true, // Prevents access to cookie via JavaScript
-        sameSite: "strict", // Ensures cookies are sent only in same-origin requests
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        sameSite: "strict"
       })
       .json({
-        message: "Logged in successfully",
-        user,
         success: true,
+        message: "Login successful",
+        user
       });
+
   } catch (error) {
-    console.error("Error verifying Firebase ID token:", error);
-    res.status(401).json({ message: "Unauthorized", error: error.message });
+    console.error('Google login error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Login failed',
+      error: error.message
+    });
   }
 };
 
@@ -246,61 +292,78 @@ export const googleRegister = async (req, res) => {
       });
     }
 
-    // Verify the Firebase token
     const decodedToken = await getAuth().verifyIdToken(auth_token);
     
-    if (!decodedToken) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid authentication token'
-      });
+    // Find user by email OR uid
+    let user = await User.findOne({
+      $or: [
+        { email: decodedToken.email },
+        { uid: decodedToken.uid }
+      ]
+    });
+
+    if (user) {
+      // Update existing user's Firebase UID if missing
+      if (!user.uid) {
+        user.uid = decodedToken.uid;
+        await user.save();
+      }
+
+      const token = createToken(user._id);
+      return res.status(200)
+        .cookie("token", token, {
+          maxAge: 24 * 60 * 60 * 1000,
+          httpOnly: true,
+          sameSite: "strict"
+        })
+        .json({
+          success: true,
+          message: "User already registered",
+          user
+        });
     }
 
-    // Check if the user already exists in the database
-    let user = await User.findOne({ uid: decodedToken.uid });
+    // Create new user
+    user = new User({
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      name: decodedToken.name || 'User',
+      profilePicture: decodedToken.picture,
+      role: "student"
+    });
 
-    if (!user) {
-      // User doesn't exist, so create a new user
-      user = new User({
-        uid: decodedToken.uid,
-        email: decodedToken.email, // You can store more details like email, name, etc.
-        name: decodedToken.name,
-        profilePicture: decodedToken.picture, // Optional: If you want to store user's photo URL
-      });
+    await user.save();
 
-      // Save the user to the database
-      await user.save();
-      const gamification = new Gamification({
-        userId: user._id,
-        totalXP: 0,
-        level: 1,
-        rank: "Novice",
-        achievements: [],
-        streak: 0,
-        lastLogin: new Date(),
-      });
-      await gamification.save();
-    }
+    // Create gamification profile
+    const gamification = new Gamification({
+      userId: user._id,
+      totalXP: 0,
+      level: 1,
+      rank: "Novice",
+      achievements: [],
+      streak: 0,
+      lastLogin: new Date()
+    });
 
-    // Create JWT token
+    await gamification.save();
+
     const token = createToken(user._id);
 
-    // Respond with user data and JWT
-    return res
-      .status(200)
+    return res.status(200)
       .cookie("token", token, {
-        maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
-        httpOnly: true, // Prevents access to cookie via JavaScript
-        sameSite: "strict", // Ensures cookies are sent only in same-origin requests
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        sameSite: "strict"
       })
       .json({
-        message: "User registered and logged in successfully",
-        user,
         success: true,
+        message: "Registration successful",
+        user
       });
+
   } catch (error) {
     console.error('Google registration error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Registration failed',
       error: error.message
