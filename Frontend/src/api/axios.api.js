@@ -228,14 +228,11 @@ export const startModule = async (courseId, moduleId) => {
   }
 };
 
-export const updateModuleProgress = async (
-  courseId,
-  moduleId,
-  progressData
-) => {
-  return api.post(
-    `/api/roadmap/${courseId}/modules/${moduleId}/progress`,
-    progressData,
+export const updateModuleProgress = async (courseId, moduleId, progressData) => {
+  // Change from /api/roadmap to /api/progress
+  return api.patch(
+    `/api/progress/courses/${courseId}/modules/${moduleId}/progress`,
+    { progress: progressData },
     {
       headers: {
         "Content-Type": "application/json",
@@ -258,12 +255,14 @@ export const completeModule = async (courseId, moduleId) => {
 
 export const getCourseProgress = async (courseId) => {
   try {
-    return api.get(`/api/roadmap/${courseId}/progress`, {
+    // Change from /api/roadmap to /api/progress
+    const response = await api.get(`/api/progress/courses/${courseId}/progress`, {
       headers: {
         "Content-Type": "application/json",
       },
       withCredentials: true,
     });
+    return response;
   } catch (error) {
     throw error.response?.data || error.message;
   }
