@@ -42,7 +42,8 @@ import PersonalizedCourses from './pages/PersonalizedCourses/PersonalizedCourses
 import PersonalizedCourseLearning from './pages/PersonalizedCourses/PersonalizedCourseLearning';
 
 import WebSocketPage from './pages/Community/WebSocketPage';
-import Chat from './pages/Community/Chat';
+import Chat from './components/Chat/ChatComponent';
+import CommunityHome from './pages/Community/CommunityHome';
 
 function App() {
   return (
@@ -214,7 +215,7 @@ function App() {
 
                   {/* Protected Routes */}
                   <Route path="/assessment" element={<ProtectedRoute element={<Questions />} />} />
-                  <Route path="/community" element={<TopSection />} /> {/* Add route for TopSection */}
+                  <Route path="/community" element={<CommunityHome />} />
                   <Route path="/community/queries" element={<CommunityLayout />} />
                   <Route path="/roadmap" element={<ProtectedRoute element={<RoadmapPage />} />} />
                   <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />

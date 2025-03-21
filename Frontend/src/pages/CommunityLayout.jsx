@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import QueryCard from './QueryCard';
-// import Header from '../components/Header';
-import CommunityChat from './CommunityChat';
+import ChatComponent from '@/components/Chat/ChatComponent';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 
 const CommunityLayout = () => {
   const [showModal, setShowModal] = useState(false);
@@ -107,15 +108,21 @@ const CommunityLayout = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="mt-4 p-6 rounded-lg shadow-lg w-120 max-h-[80vh] overflow-y-auto">
-            <CommunityChat />
-            <button
-              onClick={handleCloseModal}
-              className="mt-4 bg-[#24bdff] text-black font-bold py-2 px-4 rounded-lg hover:bg-[#1da7e6]"
-            >
-              Close
-            </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg shadow-lg w-[80vw] max-w-[1200px] max-h-[90vh] overflow-hidden">
+            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">Community Discussion</h2>
+              <Button
+                onClick={handleCloseModal}
+                variant="ghost"
+                className="text-white hover:bg-gray-800"
+              >
+                Close
+              </Button>
+            </div>
+            <div className="p-4">
+              <ChatComponent />
+            </div>
           </div>
         </div>
       )}

@@ -79,23 +79,11 @@ app.use("/api/gamification", gamificationRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/roadmap", customRoutes);
 
-// Socket.IO Setup
-const io = new SocketServer(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
+// Initialize Socket.IO
+const io = new SocketServer(server, CORS_OPTIONS);
 
 io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
-
-  // Send welcome message
-  socket.emit('message', {
-    type: 'system',
-    text: 'Welcome to the chat!',
-    timestamp: new Date()
-  });
+  console.log('Client connected:', socket.id);
 
   // Broadcast user count
   io.emit('message', {
