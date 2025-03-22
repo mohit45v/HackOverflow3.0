@@ -30,7 +30,7 @@ const CreateCourse = () => {
   const user = useSelector(state => state.auth.user);
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     title: '',
@@ -94,7 +94,7 @@ const CreateCourse = () => {
   const handleModuleChange = (index, field, value) => {
     setFormData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, i) => 
+      modules: prev.modules.map((module, i) =>
         i === index ? { ...module, [field]: value } : module
       )
     }));
@@ -103,16 +103,16 @@ const CreateCourse = () => {
   const handleAddQuiz = (moduleIndex) => {
     setFormData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, i) => 
-        i === moduleIndex 
+      modules: prev.modules.map((module, i) =>
+        i === moduleIndex
           ? {
-              ...module,
-              quiz: [...module.quiz, {
-                question: '',
-                options: ['', ''],
-                correctAnswer: ''
-              }]
-            }
+            ...module,
+            quiz: [...module.quiz, {
+              question: '',
+              options: ['', ''],
+              correctAnswer: ''
+            }]
+          }
           : module
       )
     }));
@@ -121,12 +121,12 @@ const CreateCourse = () => {
   const handleRemoveQuiz = (moduleIndex, quizIndex) => {
     setFormData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, i) => 
-        i === moduleIndex 
+      modules: prev.modules.map((module, i) =>
+        i === moduleIndex
           ? {
-              ...module,
-              quiz: module.quiz.filter((_, qi) => qi !== quizIndex)
-            }
+            ...module,
+            quiz: module.quiz.filter((_, qi) => qi !== quizIndex)
+          }
           : module
       )
     }));
@@ -135,16 +135,16 @@ const CreateCourse = () => {
   const handleQuizChange = (moduleIndex, quizIndex, field, value) => {
     setFormData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, i) => 
-        i === moduleIndex 
+      modules: prev.modules.map((module, i) =>
+        i === moduleIndex
           ? {
-              ...module,
-              quiz: module.quiz.map((q, qi) => 
-                qi === quizIndex 
-                  ? { ...q, [field]: value }
-                  : q
-              )
-            }
+            ...module,
+            quiz: module.quiz.map((q, qi) =>
+              qi === quizIndex
+                ? { ...q, [field]: value }
+                : q
+            )
+          }
           : module
       )
     }));
@@ -153,16 +153,16 @@ const CreateCourse = () => {
   const handleAddQuizOption = (moduleIndex, quizIndex) => {
     setFormData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, i) => 
-        i === moduleIndex 
+      modules: prev.modules.map((module, i) =>
+        i === moduleIndex
           ? {
-              ...module,
-              quiz: module.quiz.map((q, qi) => 
-                qi === quizIndex 
-                  ? { ...q, options: [...q.options, ''] }
-                  : q
-              )
-            }
+            ...module,
+            quiz: module.quiz.map((q, qi) =>
+              qi === quizIndex
+                ? { ...q, options: [...q.options, ''] }
+                : q
+            )
+          }
           : module
       )
     }));
@@ -171,23 +171,23 @@ const CreateCourse = () => {
   const handleRemoveQuizOption = (moduleIndex, quizIndex, optionIndex) => {
     setFormData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, i) => 
-        i === moduleIndex 
+      modules: prev.modules.map((module, i) =>
+        i === moduleIndex
           ? {
-              ...module,
-              quiz: module.quiz.map((q, qi) => 
-                qi === quizIndex 
-                  ? { ...q, options: q.options.filter((_, oi) => oi !== optionIndex) }
-                  : q
-              )
-            }
+            ...module,
+            quiz: module.quiz.map((q, qi) =>
+              qi === quizIndex
+                ? { ...q, options: q.options.filter((_, oi) => oi !== optionIndex) }
+                : q
+            )
+          }
           : module
       )
     }));
   };
 
   const validateStep = (step) => {
-    switch(step) {
+    switch (step) {
       case 1:
         return formData.title && formData.description && formData.category && formData.level;
       case 2:
@@ -253,15 +253,15 @@ const CreateCourse = () => {
     };
   }, []);
 
-  const handleSubmit = async () => {
-    if (isSubmitting) return;
-    
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     try {
       setIsSubmitting(true);
-      
+
       // Create FormData object
       const courseFormData = new FormData();
-      
+
       // Append basic course details
       courseFormData.append('title', formData.title);
       courseFormData.append('description', formData.description);
@@ -269,30 +269,30 @@ const CreateCourse = () => {
       courseFormData.append('price', formData.price);
       courseFormData.append('category', formData.category);
       courseFormData.append('level', formData.level);
-      
+
       // Append course poster if exists
       if (formData.poster) {
         courseFormData.append('poster', formData.poster);
       }
-      
+
       // Append modules as JSON string
       courseFormData.append('modules', JSON.stringify(formData.modules));
-      
+
+      // Log the data being sent
+      console.log("Submitting course data:", courseFormData);
+
       // Send request to backend
-      const data  = await createCourse(courseFormData);
-        // Show success message
+      const data = await createCourse(courseFormData);
+      // Show success message
       toast({
         title: "Success!",
         description: data.message || "Course created successfully",
         variant: "success",
       });
-      
+
       // Navigate to the course page
       navigate(`/instructor/courses/${data.course._id}`);
-      
-      
-      
-      
+
     } catch (error) {
       console.error('Error creating course:', error);
       toast({
@@ -313,7 +313,7 @@ const CreateCourse = () => {
             <div className="flex items-center">
               <div className={cn(
                 "w-10 h-10 rounded-full flex items-center justify-center",
-                currentStep > step.number 
+                currentStep > step.number
                   ? "bg-green-500 text-white"
                   : currentStep === step.number
                     ? "bg-[#6938EF] text-white"
@@ -333,7 +333,7 @@ const CreateCourse = () => {
             {index < steps.length - 1 && (
               <div className={cn(
                 "flex-1 mx-4 h-[2px]",
-                currentStep > step.number + 1 
+                currentStep > step.number + 1
                   ? "bg-green-500"
                   : "bg-accent"
               )} />
@@ -369,9 +369,9 @@ const CreateCourse = () => {
             )}>
               {imagePreview ? (
                 <>
-                  <img 
-                    src={imagePreview} 
-                    alt="Course poster" 
+                  <img
+                    src={imagePreview}
+                    alt="Course poster"
                     className="w-full h-full object-cover"
                   />
                   <button
@@ -467,22 +467,22 @@ const CreateCourse = () => {
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           </div>
-          </div>
+        </div>
 
         <div className="col-span-2 space-y-2">
           <label className="text-sm font-medium">Description</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className={cn(
+            className={cn(
               "w-full px-4 py-2 rounded-xl border bg-transparent",
               "focus:outline-none focus:ring-2 focus:ring-[#6938EF]/50",
               theme === 'dark' ? 'border-[#6938EF]/20' : 'border-border'
-                  )}
+            )}
             rows={3}
             placeholder="Describe what students will learn in this course..."
-                />
-              </div>
+          />
+        </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Difficulty Level</label>
@@ -614,13 +614,13 @@ const CreateCourse = () => {
                     type="text"
                     value={module.videoUrl}
                     onChange={(e) => handleModuleChange(moduleIndex, 'videoUrl', e.target.value)}
-                  className={cn(
+                    className={cn(
                       "w-full pl-10 pr-4 py-2 rounded-xl border bg-transparent",
                       "focus:outline-none focus:ring-2 focus:ring-[#6938EF]/50",
                       theme === 'dark' ? 'border-[#6938EF]/20' : 'border-border'
-                  )}
+                    )}
                     placeholder="Enter video URL"
-                />
+                  />
                 </div>
               </div>
 
@@ -639,10 +639,10 @@ const CreateCourse = () => {
                 </div>
 
                 {module.quiz.map((quiz, quizIndex) => (
-                    <div
+                  <div
                     key={quizIndex}
-                      className={cn(
-                        "p-4 rounded-lg border",
+                    className={cn(
+                      "p-4 rounded-lg border",
                       theme === 'dark' ? 'border-[#6938EF]/20' : 'border-border'
                     )}
                   >
@@ -761,9 +761,9 @@ const CreateCourse = () => {
       <div className="relative h-48 rounded-t-2xl overflow-hidden">
         {imagePreview ? (
           <>
-            <img 
-              src={imagePreview} 
-              alt="Course poster" 
+            <img
+              src={imagePreview}
+              alt="Course poster"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/40" />
@@ -836,8 +836,8 @@ const CreateCourse = () => {
                       theme === 'dark' ? 'bg-[#6938EF]/20' : 'bg-white'
                     )}>
                       <span className="text-sm font-medium text-[#6938EF]">{moduleIndex + 1}</span>
-                          </div>
-                          <div>
+                    </div>
+                    <div>
                       <h3 className="font-medium">{module.title}</h3>
                       <p className="text-sm text-muted-foreground">
                         {module.quiz.length} {module.quiz.length === 1 ? 'quiz' : 'quizzes'}
@@ -883,18 +883,18 @@ const CreateCourse = () => {
                                   <span className="text-xs">{String.fromCharCode(65 + optionIndex)}</span>
                                 </div>
                                 <span>{option}</span>
-                            </div>
+                              </div>
                             ))}
                           </div>
                         </div>
                       ))}
                     </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  )}
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -924,9 +924,9 @@ const CreateCourse = () => {
               <div className="col-span-2">
                 <span className="text-sm text-muted-foreground">Course Poster</span>
                 <div className="mt-2 relative w-[200px] h-[120px] rounded-xl overflow-hidden border">
-                  <img 
-                    src={imagePreview} 
-                    alt="Course poster" 
+                  <img
+                    src={imagePreview}
+                    alt="Course poster"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -961,7 +961,7 @@ const CreateCourse = () => {
             <BookOpen className="w-4 h-4 text-[#6938EF]" />
             Course Content ({formData.modules.length} {formData.modules.length === 1 ? 'Module' : 'Modules'})
           </h3>
-          
+
           {formData.modules.map((module, moduleIndex) => (
             <div
               key={moduleIndex}
@@ -990,7 +990,7 @@ const CreateCourse = () => {
                         <Video className="w-4 h-4" />
                         Video URL
                       </span>
-                      <a 
+                      <a
                         href={module.videoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1007,7 +1007,7 @@ const CreateCourse = () => {
                         <ListChecks className="w-4 h-4 text-[#6938EF]" />
                         Quiz ({module.quiz.length} {module.quiz.length === 1 ? 'Question' : 'Questions'})
                       </span>
-                      
+
                       {module.quiz.map((quiz, quizIndex) => (
                         <div
                           key={quizIndex}
@@ -1078,10 +1078,7 @@ const CreateCourse = () => {
         {renderStepIndicator()}
 
         {/* Form */}
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {currentStep === 1 && renderBasicDetails()}
           {currentStep === 2 && renderModules()}
           {currentStep === 3 && renderPreview()}
@@ -1105,7 +1102,7 @@ const CreateCourse = () => {
                 <span>Previous</span>
               </button>
             )}
-            
+
             {currentStep < 4 ? (
               <button
                 type="button"

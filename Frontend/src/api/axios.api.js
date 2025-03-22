@@ -5,6 +5,15 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Add a request interceptor to include the token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("auth_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Add response interceptor
 api.interceptors.response.use(
   (response) => response.data, // Automatically extract the data
@@ -447,6 +456,16 @@ export const getAllCustomCourses = async () => {
   } catch (error) {
     throw error.response?.data || error.message;
   }
+};
+
+// Create Project API
+export const createProject = (formData) => {
+  return api.post("/api/project/create", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    withCredentials: true,
+  });
 };
 
 const handleSubmit = async (e) => {

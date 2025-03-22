@@ -16,7 +16,8 @@ const CreateCourse = () => {
             const courseData = {
                 title: formData.title,
                 description: formData.description,
-                // Add other necessary fields
+                // Ensure all necessary fields are included
+                // e.g., category, level, price, etc.
             };
 
             // Log the data being sent

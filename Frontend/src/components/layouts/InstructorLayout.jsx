@@ -36,6 +36,11 @@ const InstructorLayout = ({ children }) => {
       icon: ClipboardList,
       path: '/instructor/assessments'
     },
+    {
+      title: 'Projects',
+      icon: BookOpen,
+      path: '/instructor/projects'
+    },
     
   ];
 

@@ -70,7 +70,6 @@ export function Navbar() {
     if (authState.status === false) {
       return [
         { path: "/", label: "Home" },
-        { path: "/community", label: "Community" },
         { path: "/internships", label: "Internships" },
       ];
     }
@@ -79,13 +78,14 @@ export function Navbar() {
       return [
         { path: "/instructor/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { path: "/instructor/courses", label: "Courses", icon: BookOpen },
-        { path: "/instructor/assessments", label: "Assessments", icon: FileQuestion }
+        { path: "/instructor/assessments", label: "Assessments", icon: FileQuestion },
+        { path: "/instructor/projects", label: "Project", icon: BookOpen }
       ];
     }
 
     return [
       { path: "/", label: "Home" },
-      { path: "/community", label: "Community" },
+      { path: "/project", label: "Projects" },
       { path: "/internships", label: "Internships" },
       { path: "/dashboard", label: "Dashboard" },
     ];

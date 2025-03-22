@@ -1,5 +1,5 @@
 import express from "express";
-import { authMiddleware, isInstructor } from "../middleware/auth.middleware.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 import {
   createCourse,
   updateCourse,
@@ -27,7 +27,6 @@ router.get("/explore", getAllCourses);
 router.get(
   "/instructor/stats",
   authMiddleware,
-  isInstructor,
   getInstructorStats
 );
 
@@ -35,7 +34,6 @@ router.get(
 router.get(
   "/instructor/courses",
   authMiddleware,
-  isInstructor,
   getInstructorCourses
 );
 
@@ -43,7 +41,6 @@ router.get(
 router.post(
   "/create",
   authMiddleware,
-  isInstructor,
   upload.single("poster"),
   createCourseValidator,
   createCourse
@@ -53,20 +50,19 @@ router.post(
 router.get("/:courseId", authMiddleware, getCourseDetails);
 
 // Get course statistics
-router.get("/:courseId/stats", authMiddleware, isInstructor, getCourseStats);
+router.get("/:courseId/stats", authMiddleware, getCourseStats);
 
 // Update course route with optional file upload
 router.put(
   "/update/:courseId",
   authMiddleware,
-  isInstructor,
   upload.single("poster"),
   updateCourseValidator,
   updateCourse
 );
 
 // Delete course
-router.delete("/delete/:courseId", authMiddleware, isInstructor, deleteCourse);
+router.delete("/delete/:courseId", authMiddleware, deleteCourse);
 
 // Enroll in course route
 router.post(

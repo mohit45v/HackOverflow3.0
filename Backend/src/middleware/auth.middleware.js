@@ -1,29 +1,51 @@
-import { verifyToken } from "../utils/jwt.util.js";
+import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+
 export const authMiddleware = async (req, res, next) => {
   try {
     const token = req.cookies.token;
+
     if (!token) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized Acess", success: false });
+      return res.status(401).json({
+        success: false,
+        message: "No token provided"
+      });
     }
-    const decode = verifyToken(token);
-    if (!decode) {
-      return res.status(401).json({ message: "Unauthorized " });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Get user with role
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found"
+      });
     }
-    req.user = decode;
-    const user = await User.findById(req.user.userId);
-    req.user.role = user.role;
+
+    req.user = {
+      userId: decoded.userId,
+      role: user.role
+    };
+
+    // Log the user role
+    console.log("User role:", req.user.role);
+
     next();
   } catch (error) {
-    return res.status(500).json({ message: "Invalid Token", success: false });
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token"
+    });
   }
 };
 
 export const isInstructor = async (req, res, next) => {
-  if (req.user.role !== "instructor") {
-    return res.status(403).json({ message: "Unauthorized", success: false });
+  if (req.user.role !== "instructor" && req.user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Instructor access required"
+    });
   }
   next();
 };
